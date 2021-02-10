@@ -538,7 +538,7 @@ def pregs
   @w_reg.setpos(1,0)
   10.times do |i| 
     r = num_format(@r[i].to_f)
-    @w_reg.p(" R##{i}" + "#{r}".rjust(27) + "\n")
+    @w_reg.p(" R##{i}" + "#{r}".rjust(27) + " ")
   end
 end
 def error(err)
@@ -632,6 +632,7 @@ loop do # OUTER LOOP - (catching refreshes via 'b')
   begin # Create the windows/panels
     maxx = Curses.cols
     maxy = Curses.lines
+    init_pair( 1, 235, 235) # stdscr
     Curses.stdscr.color = 1
     Curses.stdscr.fill
     # Curses::Window.new(h,w,y,x)
@@ -644,17 +645,16 @@ loop do # OUTER LOOP - (catching refreshes via 'b')
     @w_reg = Curses::Window.new(maxy - 22, 32, 21, 1)
     @w_hlp = Curses::Window.new(maxy -  2, maxx - 35, 1, 34)
 
-    init_pair( 1, 234, 234) # stdscr
     init_pair( 2,  88, 238) # @w_inf
     init_pair( 3,  60, 238) # @w_lbl
     init_pair( 4, 246, 236) # @w_l
     init_pair( 5, 250, 234) # @w_yzt
     init_pair( 6,   7,   0) # @w_x
     init_pair( 7,   0, 250) # @w_xi
-    init_pair( 8, 242, 233) # @w_cmd ctrl- & @w_reg
-    init_pair( 9, 111, 233) # @w_cmd
-    init_pair(10, 214, 233) # @w_cmd key
-    init_pair(11, 238, 233) # @w_hlp
+    init_pair( 8, 242,   0) # @w_cmd ctrl- & @w_reg
+    init_pair( 9, 111,   0) # @w_cmd
+    init_pair(10, 214,   0) # @w_cmd key
+    init_pair(11, 238,   0) # @w_hlp
 
     @w_inf.color = 2
     @w_lbl.color = 3
@@ -670,7 +670,8 @@ loop do # OUTER LOOP - (catching refreshes via 'b')
     @w_lbl.p(" L T Z Y X")
     @w_cmd.fill; cmd
     @w_reg.fill
-    @w_hlp.fill; help
+    @w_hlp.fill 
+    help
 
     @u = []
     @undo = false
