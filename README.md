@@ -27,3 +27,6 @@ You can undo all the way to the beginning of the session.
 
 The stack, register contents and modes are saved on Quit.
  
+## Screencast
+
+[![T-REX screencast](/img/screenshot.png)](https://youtu.be/vhSFH1j-vEY)
