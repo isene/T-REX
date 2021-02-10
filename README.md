@@ -21,7 +21,7 @@ Use the "s" key to set the limit for viewing numbers in the "scientific" notatio
 
 Content of registers #0-#9 are shown below the functions.
 
-Store/recall using Right/Left keys. Ctrl-M clears the regs.
+Store/recall using Right/Left keys. "M" clears the regs.
 
 You can undo all the way to the beginning of the session.
 

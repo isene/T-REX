@@ -284,7 +284,6 @@ def getchr # PROCESS KEY PRESSES
   when "" then chr = "C-R"
   when "" then chr = "C-D"
   when "" then chr = "C-C"
-  when "" then chr = "C-M"
   when "" then chr = "C-T"
   when "" then chr = "C-^"
   when "\r" then chr = "ENTER"
@@ -387,7 +386,7 @@ def main_getkey(c) # GET KEY FROM USER
     @s.z = 0
     @s.t = 0
     @s.l = 0
-  when 'C-M'
+  when 'M'
     @r = %w[0 0 0 0 0 0 0 0 0 0] 
   when 'RIGHT' # Store to Reg
     @w_x.clr
@@ -608,7 +607,7 @@ help = <<HELPTEXT
   the "scientific" notation (e.g. 5e+06 for 5000000).
  
   Content of registers #0-#9 are shown below the functions.
-  Store/recall using Right/Left keys. Ctrl-M clears the regs.
+  Store/recall using Right/Left keys. "M" clears the regs.
  
   You can undo all the way to the beginning of the session.
   The stack, register contents and modes are saved on Quit.
