@@ -231,12 +231,13 @@ class Stack
 end
 
 begin # BASIC SETUP
-  @s     = Stack.new(0, 0, 0, 0, 0)
-  @r     = %w[0 0 0 0 0 0 0 0 0 0] 
-  @f     = 4
-  @g     = 6
-  @d     = true
-  @m     = "Deg"
+  @s = Stack.new(0, 0, 0, 0, 0)
+  @r = %w[0 0 0 0 0 0 0 0 0 0] 
+  @f = 4
+  @g = 6
+  @d = true
+  @m = "Deg"
+  @h = true
 
   load(Dir.home+'/.t-rex.conf') if File.exist?(Dir.home+'/.t-rex.conf')
   @m == "Deg" ? @s.deg = true : @s.deg = false
@@ -683,7 +684,7 @@ loop do # OUTER LOOP - (catching refreshes via 'b')
     @w_cmd.fill; cmd
     @w_reg.fill
     @w_hlp.fill 
-    help
+    help if @h
 
     @u = []
     @undo = false
