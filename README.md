@@ -33,7 +33,7 @@ registers. Backspace clears the x register.
 ## Copy/Paste to/from X
 You can paste numbers directly to the x register the normal way (middle mouse
 button or Shift+Insert). You can copy/yank the number in the x register by
-pressing "y" to paste in into other applications.
+pressing "y" to paste in into other applications (needs "xclip" installed).
 
 ## Screencast
 
