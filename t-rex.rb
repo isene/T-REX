@@ -304,7 +304,7 @@ def main_getkey(c) # GET KEY FROM USER
     @s.rup
   when 'DOWN' # Roll stack down
     @s.rdn
-  when '<'    # x<>y
+  when '<', 'LEFT', 'RIGHT' # x<>y
     @s.xy
   when '+'
     @s.add
@@ -378,7 +378,7 @@ def main_getkey(c) # GET KEY FROM USER
     @s.deg = true
   when 'C-D'   # P->R
     @s.pr
-  when 'c'
+  when 'c', 'BACK'
     @s.x = 0
   when 'C-C'   # Clear stack
     @s.x = 0
@@ -388,14 +388,14 @@ def main_getkey(c) # GET KEY FROM USER
     @s.l = 0
   when 'M'
     @r = %w[0 0 0 0 0 0 0 0 0 0] 
-  when 'RIGHT' # Store to Reg
+  when 'S' # Store to Reg
     @w_x.clr
     @w_x.p(" Store x in Reg #(0-9)")
     r = getchr
     if r =~ /[0-9]/
       @r[r.to_i] = @s.x
     end
-  when 'LEFT'  # Recall from Reg
+  when 'R'  # Recall from Reg
     @w_x.clr
     @w_x.p(" Recall from Reg #(0-9)")
     r = getchr
@@ -555,7 +555,7 @@ text = <<CMDTEXT
  asin acos atan  R→P P→R  cstk
   s|i|n  c|o|s  t|a|n  |r|ad |d|eg  |c|lx
 
- |→|sto  rcl|←|  |u|ndo  |Q|uit  
+  |S|to  |R|cl  |u|ndo  |Q|uit  
 CMDTEXT
   text = text.split("\n")
   text.each_with_index do |t,i|
@@ -607,7 +607,7 @@ help = <<HELPTEXT
   the "scientific" notation (e.g. 5e+06 for 5000000).
  
   Content of registers #0-#9 are shown below the functions.
-  Store/recall using Right/Left keys. "M" clears the regs.
+  Store/recall using capital "S"/"R". "M" clears the regs.
  
   You can undo all the way to the beginning of the session.
   The stack, register contents and modes are saved on Quit.
