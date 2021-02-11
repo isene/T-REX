@@ -424,7 +424,17 @@ def main_getkey(c) # GET KEY FROM USER
       @undo = true
     end
   when 'y'
-    system("echo #{@s.x} | xclip")
+    begin
+      @w_x.color = 7
+      @w_x.fill
+      system("echo #{@s.x} | xclip")
+      sleep(0.1)
+      @w_x.color = 6
+    rescue
+      @w_x.clr
+      @w_x.p(" Install xclip to yank")
+      getchr
+    end
   when 'Q'     # Exit 
     exit 0
   when /[0-9.,-]/ # Go to entry mode for x
