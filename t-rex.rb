@@ -423,6 +423,8 @@ def main_getkey(c) # GET KEY FROM USER
       @u.pop
       @undo = true
     end
+  when 'y'
+    system("echo #{@s.x} | xclip")
   when 'Q'     # Exit 
     exit 0
   when /[0-9.,-]/ # Go to entry mode for x

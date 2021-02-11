@@ -30,6 +30,11 @@ The stack, register contents and modes are saved on Quit.
 Alternative keys: Left/Right keys (in addition to "<") exchanges X and Y
 registers. Backspace clears the x register.
 
+## Copy/Paste to/from X
+You can paste numbers directly to the x register the normal way (middle mouse
+button or Shift+Insert). You can copy/yank the number in the x register by
+pressing "y" to paste in into other applications.
+
 ## Screencast
 
 [![T-REX screencast](/img/screenshot.png)](https://youtu.be/vhSFH1j-vEY)
