@@ -35,11 +35,13 @@ You can paste numbers directly to the x register the normal way (middle mouse
 button or Shift+Insert). You can copy/yank the number in the x register by
 pressing "y" to paste in into other applications (needs "xclip" installed).
 
+To paste the full set of 10 memory registers to the clipboard, use "Y".
+
 ## Disable the Help screen
 To disable the right panel (the help text) simply add this to ".t-rex.conf":
 
 ```
-@h = false
+@hlp = false
 ```
 
 ## Screencast

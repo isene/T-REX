@@ -231,16 +231,16 @@ class Stack
 end
 
 begin # BASIC SETUP
-  @s = Stack.new(0, 0, 0, 0, 0)
-  @r = %w[0 0 0 0 0 0 0 0 0 0] 
-  @f = 4
-  @g = 6
-  @d = true
-  @m = "Deg"
-  @h = true
+  @stk = Stack.new(0, 0, 0, 0, 0)
+  @reg = %w[0 0 0 0 0 0 0 0 0 0] 
+  @fix = 4
+  @sci = 6
+  @dot = true
+  @mod = "Deg"
+  @hlp = true
 
   load(Dir.home+'/.t-rex.conf') if File.exist?(Dir.home+'/.t-rex.conf')
-  @m == "Deg" ? @s.deg = true : @s.deg = false
+  @mod == "Deg" ? @stk.deg = true : @stk.deg = false
 
   Curses.init_screen
   Curses.start_color
@@ -297,130 +297,130 @@ def main_getkey(c) # GET KEY FROM USER
   c == "" ? chr = getchr : chr = c
   case chr
   when 'ENTER'
-    @s.l = @s.x
-    @s.y, @s.z, @s.t = @s.x, @s.y, @s.z
+    @stk.l = @stk.x
+    @stk.y, @stk.z, @stk.t = @stk.x, @stk.y, @stk.z
   when "'"
-    @d = !@d
+    @dot = !@dot
   when 'UP'   # Roll stack up
-    @s.rup
+    @stk.rup
   when 'DOWN' # Roll stack down
-    @s.rdn
+    @stk.rdn
   when '<', 'LEFT', 'RIGHT' # x<>y
-    @s.xy
+    @stk.xy
   when '+'
-    @s.add
+    @stk.add
   when '-'
-    @s.subtract
+    @stk.subtract
   when '*'
-    @s.multiply
+    @stk.multiply
   when '/'
-    e = @s.divide
+    e = @stk.divide
     error ("Error: Divide by zero") if e == "Error"
   when '\\'   # \ (modulo)
-    @s.mod
+    @stk.mod
   when '%'    # 100*x/y
-    e = @s.percent
+    e = @stk.percent
     error ("Error: Divide by zero") if e == "Error"
   when 'h'    # Change sign
-    @s.chs
+    @stk.chs
   when 'p'    # pi
-    @s.l = @s.x
-    @s.pi
+    @stk.l = @stk.x
+    @stk.pi
   when '^'    # y^x
-    @s.pow
+    @stk.pow
   when 'C-^'  # y^(1/x)
-    e = @s.root 
+    e = @stk.root 
     error ("Error: Divide by zero") if e == "Error"
   when 'x'    # 1/x
-    e = @s.recip
+    e = @stk.recip
     error ("Error: Divide by zero") if e == "Error"
   when 'C-X'  # x^2
-    @s.sqr  
+    @stk.sqr  
   when 'q'    # Square root
-    e = @s.sqrt
+    e = @stk.sqrt
     error ("Error: Imaginary number") if e == "Error"
   when 'C-Q'  # x^3
-    @s.cube
+    @stk.cube
   when 'n'    # ln(x)
-    e = @s.ln
+    e = @stk.ln
     error ("Error: Negative x") if e == "Error"
   when 'C-N'  # e^x
-    @s.ex
+    @stk.ex
   when 'g'    # log(x)
-    e = @s.log
+    e = @stk.log
     error ("Error: Negative x") if e == "Error"
   when 'C-G'  # 10^x
-    @s.tenx
+    @stk.tenx
   when 'l'    # Recall Lastx (l) to x
-    @s.lift
-    @s.x = @s.l
+    @stk.lift
+    @stk.x = @stk.l
   when 'C-L'  # Break/redraw
     @break = true
   when 'i'
-    @s.sin
+    @stk.sin
   when 'C-I'
-    @s.asin
+    @stk.asin
   when 'o'
-    @s.cos
+    @stk.cos
   when 'C-O'
-    @s.acos
+    @stk.acos
   when 'a'
-    @s.tan
+    @stk.tan
   when 'C-A'
-    @s.atan
+    @stk.atan
   when 'r'     # Rad mode
-    @m     = "Rad"
-    @s.deg = false
+    @mod     = "Rad"
+    @stk.deg = false
   when 'C-R'   # R->P
-    e = @s.rp
+    e = @stk.rp
     error ("Error: Divide by zero") if e == "Error"
   when 'd'     # Deg mode
-    @m     = "Deg"
-    @s.deg = true
+    @mod     = "Deg"
+    @stk.deg = true
   when 'C-D'   # P->R
-    @s.pr
+    @stk.pr
   when 'c', 'BACK'
-    @s.x = 0
+    @stk.x = 0
   when 'C-C'   # Clear stack
-    @s.x = 0
-    @s.y = 0
-    @s.z = 0
-    @s.t = 0
-    @s.l = 0
+    @stk.x = 0
+    @stk.y = 0
+    @stk.z = 0
+    @stk.t = 0
+    @stk.l = 0
   when 'M'
-    @r = %w[0 0 0 0 0 0 0 0 0 0] 
+    @reg = %w[0 0 0 0 0 0 0 0 0 0] 
   when 'S' # Store to Reg
     @w_x.clr
     @w_x.p(" Store x in Reg #(0-9)")
     r = getchr
     if r =~ /[0-9]/
-      @r[r.to_i] = @s.x
+      @reg[r.to_i] = @stk.x
     end
   when 'R'  # Recall from Reg
     @w_x.clr
     @w_x.p(" Recall from Reg #(0-9)")
     r = getchr
     if r =~ /[0-9]/
-      @s.lift
-      @s.x = @r[r.to_i].to_f
+      @stk.lift
+      @stk.x = @reg[r.to_i].to_f
     end
   when 's'     # Set Sci size/limit
     @w_x.clr
     @w_x.p(" Sci notation limit (2-9)")
     r = getchr
     if r =~ /[2-9]/
-      @g = r.to_i
+      @sci = r.to_i
     end
   when 'f'     # Set Fix size
     @w_x.clr
     @w_x.p(" Fixed decimals (0-9)")
     r = getchr
     if r =~ /[0-9]/
-      @f = r.to_i
+      @fix = r.to_i
     end
   when 'u'     # Undo
     unless @u.empty?
-      @s = @u.last.dup
+      @stk = @u.last.dup
       @u.pop
       @undo = true
     end
@@ -428,7 +428,24 @@ def main_getkey(c) # GET KEY FROM USER
     begin
       @w_x.color = 7
       @w_x.fill
-      system("echo #{@s.x} | xclip")
+      system("echo '#{@stk.x}' | xclip")
+      sleep(0.1)
+      @w_x.color = 6
+    rescue
+      @w_x.clr
+      @w_x.p(" Install xclip to yank")
+      getchr
+    end
+  when 'Y'
+    begin
+      @w_x.color = 5
+      @w_x.fill
+      mem = ""
+      10.times do |i|
+        reg = @reg[i]
+        mem += "#{reg}\n"
+      end
+      system("echo '#{mem}' | xclip")
       sleep(0.1)
       @w_x.color = 6
     rescue
@@ -441,9 +458,9 @@ def main_getkey(c) # GET KEY FROM USER
   when /[0-9.,-]/ # Go to entry mode for x
     number, c = entry(chr)
     if number != ""
-      @s.l = @s.x
-      @s.lift unless @s.x == 0
-      @s.x = number
+      @stk.l = @stk.x
+      @stk.lift unless @stk.x == 0
+      @stk.x = number
     end
     main_getkey(c) if %w[< + - * / \ % ^ x C-X q C-Q n C-N g C-G i C-I o C-O a C-A c C-C].include?(c)
   end
@@ -513,13 +530,13 @@ def entry(chr)
   return number, chr
 end
 def num_format(n)
-  if n.abs >= 10 ** @g.to_i
-    n = "%.#{@g}g" % n
-  elsif n.abs <= 10 ** (1 / @g.to_i) and n > 10
-    n = "%.#{@g}g" % n
+  if n.abs >= 10 ** @sci.to_i
+    n = "%.#{@sci}g" % n
+  elsif n.abs <= 10 ** (1 / @sci.to_i) and n > 10
+    n = "%.#{@sci}g" % n
   else
-    n = n.round(@f)
-    n = "%.#{@f}f" % n
+    n = n.round(@fix)
+    n = "%.#{@fix}f" % n
     m = n[/^-/]
     m = "" if m == nil
     n.sub!(/-/, '')
@@ -527,7 +544,7 @@ def num_format(n)
     i.gsub!(/(\d)(?=(\d\d\d)+(?!\d))/, "\\1,")
     f = n.sub(/\d*\.(\d*)/, '\1')
     n = m + i + "." + f
-    if not @d
+    if not @dot
       n.gsub!(/,/, ' ')
       n.sub!(/\./, ',')
     end
@@ -535,11 +552,11 @@ def num_format(n)
   return n
 end
 def pstack
-  x = num_format(@s.x)
-  y = num_format(@s.y)
-  z = num_format(@s.z)
-  t = num_format(@s.t)
-  l = num_format(@s.l)
+  x = num_format(@stk.x)
+  y = num_format(@stk.y)
+  z = num_format(@stk.z)
+  t = num_format(@stk.t)
+  l = num_format(@stk.l)
   @w_l.setpos(0,0)
   @w_l.p(l.rjust(30))
   @w_yzt.setpos(0,0)
@@ -550,7 +567,7 @@ end
 def pregs
   @w_reg.setpos(1,0)
   10.times do |i| 
-    r = num_format(@r[i].to_f)
+    r = num_format(@reg[i].to_f)
     @w_reg.p(" R##{i}" + "#{r}".rjust(27) + " ")
   end
 end
@@ -594,48 +611,47 @@ end
 def help
 help = <<HELPTEXT
   
-  T-REX - Terminal Rpn calculator EXperiment
-  Code on GitHub: https://github.com/isene/T-REX
+  T-REX - Terminal Rpn calculator EXperiment. GitHub: https://github.com/isene/T-REX
   
-  This is a Reverse Polish Notation calculator similar 
-  to the traditional calculators from Hewlett Packard.
-  See https://www.hpmuseum.org/rpn.htm for info on RPN.
+  This is a Reverse Polish Notation calculator similar to the traditional Hewlett 
+  Packard calculators. See https://www.hpmuseum.org/rpn.htm for info on RPN.
  
-  The stack is shown to the top left:
-  L is the "Last X" register showing the previous value in X.
-  T, Z, Y and X registers comprise the operating stack.
+  The stack is shown to the top left. The X, Y, Z and  T registers comprise the 
+  operating stack. L is the "Last X" register showing the previous value in X.
   Toggle US and European number formats by pressing '. 
  
-  Functions available are shown under the stack registers.
-  The orange symbol corresponds to the key to be pressed.
-  For functions above each label (grey functions), press
-  the Control key (Ctrl) and the orange key (asin = Ctrl+i).
+  Functions available are shown under the stack registers. The orange symbol 
+  corresponds to the key to be pressed. For functions above each label (grey 
+  functions), press the Control key (Ctrl) and the orange key (asin = Ctrl+i).
   
   For Rectangular to Polar conversions:
   R-P: X value in x, Y in y - yields "θ" in y and "r" in x.
   P-R: "θ" in y and "r" in x - yeilds X in x and Y in y.
 
-  Use the "f" key to set the fixed number of decimal places.
-  Use the "s" key to set the limit for viewing numbers in
-  the "scientific" notation (e.g. 5e+06 for 5000000).
+  Use the "f" key to set the fixed number of decimal places. Use the "s" key to set 
+  the limit for viewing numbers in the "scientific" notation (e.g. 5e+06 for 5000000).
  
   Content of registers #0-#9 are shown below the functions.
   Store/recall using capital "S"/"R". "M" clears the regs.
  
+  Copy/yank the X register to clipboard with "y". Use "Y" to yank all the memory regs.
+
   You can undo all the way to the beginning of the session.
   The stack, register contents and modes are saved on Quit.
+
+  To disable this help text, add "@hlp = false" to the file ".t-rex.conf".
  
 HELPTEXT
  @w_hlp.p(help)
 end
 def conf_write # WRITE TO .t-rex.conf
-  conf  = "@f = #{@f}\n"
-  conf += "@g = #{@g}\n"
-  @d ? d = "true" : d = "false"
-  conf += "@d = #{d}\n"
-  conf += "@m = \"#{@m}\"\n"
-  conf += "@s = Stack.new(#{@s.x}, #{@s.y}, #{@s.z}, #{@s.t}, #{@s.l})\n"
-  conf += "@r = %w[#{@r[0]} #{@r[1]} #{@r[2]} #{@r[3]} #{@r[4]} #{@r[5]} #{@r[6]} #{@r[7]} #{@r[8]} #{@r[9]}]\n" 
+  conf  = "@fix = #{@fix}\n"
+  conf += "@sci = #{@sci}\n"
+  @dot ? d = "true" : d = "false"
+  conf += "@dot = #{d}\n"
+  conf += "@mod = \"#{@mod}\"\n"
+  conf += "@stk = Stack.new(#{@stk.x}, #{@stk.y}, #{@stk.z}, #{@stk.t}, #{@stk.l})\n"
+  conf += "@reg = %w[#{@reg[0]} #{@reg[1]} #{@reg[2]} #{@reg[3]} #{@reg[4]} #{@reg[5]} #{@reg[6]} #{@reg[7]} #{@reg[8]} #{@reg[9]}]\n" 
   File.write(Dir.home+'/.t-rex.conf', conf)
 end
 
@@ -684,7 +700,7 @@ loop do # OUTER LOOP - (catching refreshes via 'b')
     @w_cmd.fill; cmd
     @w_reg.fill
     @w_hlp.fill 
-    help if @h
+    help if @hlp
 
     @u = []
     @undo = false
@@ -692,12 +708,12 @@ loop do # OUTER LOOP - (catching refreshes via 'b')
     loop do # INNER, CORE LOOP 
       
       @w_inf.clr
-      @w_inf.p("  #{@m} Sci=#{@g} Fix=#{@f}".ljust(32))
+      @w_inf.p("  #{@mod} Sci=#{@sci} Fix=#{@fix}".ljust(32))
       pstack
       pregs
-      @t = @s.dup
+      @t = @stk.dup
       main_getkey("")    # Get key from user 
-      @u.push(@t.dup) if @t != @s and @undo == false
+      @u.push(@t.dup) if @t != @stk and @undo == false
       @undo = false
 
       break if @break    # Break to outer loop, redrawing windows, if user hit 'r'
