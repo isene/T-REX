@@ -25,6 +25,8 @@ Store/recall using capital "S"/"R". "M" clears the regs.
 
 You can undo all the way to the beginning of the session.
 
+The 'H' key toggles the help text in the right pane. 
+ 
 The stack, register contents and modes are saved on Quit.
  
 Alternative keys: Left/Right keys (in addition to "<") exchanges X and Y
@@ -36,13 +38,6 @@ button or Shift+Insert). You can copy/yank the number in the x register by
 pressing "y" to paste in into other applications (needs "xclip" installed).
 
 To paste the full set of 10 memory registers to the clipboard, use "Y".
-
-## Disable the Help screen
-To disable the right panel (the help text) simply add this to ".t-rex.conf":
-
-```
-@hlp = false
-```
 
 ## Screencast
 

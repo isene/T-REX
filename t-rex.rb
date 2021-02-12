@@ -453,6 +453,9 @@ def main_getkey(c) # GET KEY FROM USER
       @w_x.p(" Install xclip to yank")
       getchr
     end
+  when 'H'
+    @hlp   = !@hlp
+    @break = true
   when 'Q'     # Exit 
     exit 0
   when /[0-9.,-]/ # Go to entry mode for x
@@ -637,10 +640,11 @@ help = <<HELPTEXT
   Copy/yank the X register to clipboard with "y". Use "Y" to yank all the memory regs.
 
   You can undo all the way to the beginning of the session.
-  The stack, register contents and modes are saved on Quit.
 
-  To disable this help text, add "@hlp = false" to the file ".t-rex.conf".
- 
+  The 'H' key toggles the help text in the right pane.
+
+  The stack, register contents, modes and help text settings are saved on Quit.
+
 HELPTEXT
  @w_hlp.p(help)
 end
@@ -652,6 +656,8 @@ def conf_write # WRITE TO .t-rex.conf
   conf += "@mod = \"#{@mod}\"\n"
   conf += "@stk = Stack.new(#{@stk.x}, #{@stk.y}, #{@stk.z}, #{@stk.t}, #{@stk.l})\n"
   conf += "@reg = %w[#{@reg[0]} #{@reg[1]} #{@reg[2]} #{@reg[3]} #{@reg[4]} #{@reg[5]} #{@reg[6]} #{@reg[7]} #{@reg[8]} #{@reg[9]}]\n" 
+  @hlp ? h = "true" : h = "false"
+  conf += "@hlp = #{h}\n"
   File.write(Dir.home+'/.t-rex.conf', conf)
 end
 
