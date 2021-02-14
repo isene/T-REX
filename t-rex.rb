@@ -588,7 +588,7 @@ text = <<CMDTEXT
  asin acos atan  R→P P→R  cstk
   s|i|n  c|o|s  t|a|n  |r|ad |d|eg  |c|lx
 
-  |S|to  |R|cl  |u|ndo  |Q|uit  
+ |S|to |R|cl |s|ci |f|ix |u|ndo |H|lp |Q|uit  
 CMDTEXT
   text = text.split("\n")
   text.each_with_index do |t,i|
