@@ -39,6 +39,10 @@ pressing "y" to paste in into other applications (needs "xclip" installed).
 
 To paste the full set of 10 memory registers to the clipboard, use "Y".
 
+## Ruby mode
+Additionally, for a world of possibilities, you can access the "Ruby mode" via '@'.
+Here you can address the stack directly, e.g. x = y + (z / t). Quit Ruby mode with Ctrl-C.
+
 ## Screencast
 
 [![T-REX screencast](/img/screenshot.png)](https://youtu.be/vhSFH1j-vEY)

@@ -242,6 +242,8 @@ begin # BASIC SETUP
   load(Dir.home+'/.t-rex.conf') if File.exist?(Dir.home+'/.t-rex.conf')
   @mod == "Deg" ? @stk.deg = true : @stk.deg = false
 
+  @history = [""]
+
   Curses.init_screen
   Curses.start_color
   Curses.curs_set(0)
@@ -454,8 +456,14 @@ def main_getkey(c) # GET KEY FROM USER
       getchr
     end
   when 'H'
-    @hlp   = !@hlp
-    @break = true
+    @hlp = !@hlp
+    @w_hlp.fill
+    help if @hlp
+  when '@'     # Ruby console
+    @w_hlp.fill
+    console(" Ruby: ")
+    @w_hlp.fill
+    help if @hlp
   when 'Q'     # Exit 
     exit 0
   when /[0-9.,-]/ # Go to entry mode for x
@@ -467,6 +475,103 @@ def main_getkey(c) # GET KEY FROM USER
     end
     main_getkey(c) if %w[< + - * / \ % ^ x C-X q C-Q n C-N g C-G i C-I o C-O a C-A c C-C].include?(c)
   end
+end
+def console(pretext) # A SIMPLE READLINE-LIKE ROUTINE
+  Curses.curs_set(1)
+  Curses.echo
+  @w_hlp.color = 9
+  stk = 0
+  pos = @history[stk].length
+  @w_hlp.setpos(0,0)
+  chr = ""
+  while chr != "C-C"
+    @w_hlp.setpos(@w_hlp.cury,0)
+    text = pretext + @history[stk]
+    text += " " * (@w_hlp.maxx - text.length) if text.length < @w_hlp.maxx
+    @w_hlp.p(text)
+    @w_hlp.setpos(0,pretext.length + pos)
+    @w_hlp.refresh
+    chr = getchr
+    case chr
+    when 'UP'
+      unless stk == @history.length - 1
+        stk += 1 
+        pos = @history[stk].length
+      end
+    when 'DOWN'
+      unless stk == 0
+        stk -= 1 
+        pos = @history[stk].length
+      end
+    when 'RIGHT'
+      pos += 1 unless pos > @history[stk].length
+    when 'LEFT'
+      pos -= 1 unless pos == 0
+    when 'HOME'
+      pos = 0
+    when 'END'
+      pos = @history[stk].length
+    when 'DEL'
+      @history[stk][pos] = ""
+    when 'BACK'
+      unless pos == 0
+        pos -= 1
+        @history[stk][pos] = ""
+      end
+    when 'WBACK'
+      unless pos == 0
+        until @history[stk][pos - 1] == " " or pos == 0
+          pos -= 1
+          @history[stk][pos] = ""
+        end
+        if @history[stk][pos - 1] == " "
+          pos -= 1
+          @history[stk][pos] = ""
+        end
+      end
+    when 'LDEL'
+      @history[stk] = ""
+      pos = 0
+    when /^.$/
+      @history[stk].insert(pos,chr)
+      pos += 1
+    when 'ENTER'
+      @w_hlp.fill
+      @w_hlp.p(text)
+      @w_hlp.setpos(0,pretext.length + pos)
+      @w_hlp.refresh
+      @w_hlp.p("\n ")
+      curstr = @history[stk]
+      @history.uniq!
+      @history.compact!
+      @history.delete("")
+      begin
+        x = @stk.x
+        y = @stk.y
+        z = @stk.z
+        t = @stk.t
+        l = @stk.l
+        eval(curstr)
+        @stk.x = x
+        @stk.y = y
+        @stk.z = z
+        @stk.t = t
+        @stk.l = l
+        @w_hlp.p("\n\n")
+        pstack
+      rescue StandardError => e
+        @w_hlp.p("\n Error: #{e.inspect}\n")
+      end
+      @history.unshift("")
+      stk = 0
+      pos = @history[stk].length
+      chr = ""
+      @w_hlp.setpos(0,0)
+    end
+  end
+  @w_hlp.color = 11
+  Curses.curs_set(0)
+  Curses.noecho
 end
 def entry(chr)
   Curses.curs_set(1)
@@ -644,6 +749,9 @@ help = <<HELPTEXT
   The 'H' key toggles the help text in the right pane.
 
   The stack, register contents, modes and help text settings are saved on Quit.
+
+  Additionally, for a world of possibilities, you can access the "Ruby mode" via '@'.
+  Here you can address the stack directly, e.g. x = y + (z / t). Quit Ruby mode with Ctrl-C.
 
 HELPTEXT
  @w_hlp.p(help)
