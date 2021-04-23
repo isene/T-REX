@@ -620,7 +620,7 @@ def entry(chr)
   while %w[0 1 2 3 4 5 6 7 8 9 . , h RIGHT LEFT HOME END DEL BACK WBACK LDEL].include?(chr)
     @w_x.clr
     @w_x.setpos(0,0)
-    @w_x.pa(num)
+    @w_x.p(num)
     @w_x.setpos(0,pos)
     @w_x.refresh
     chr = getchr
