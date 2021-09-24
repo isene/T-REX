@@ -3,6 +3,8 @@ T-REX - Terminal Rpn calculator EXperiment
 
 This is a Reverse Polish Notation calculator similar to the traditional calculators from Hewlett Packard. See https://www.hpmuseum.org/rpn.htm for info on RPN.
 
+Install by cloning this repo and putting `astropanel.rb` into your "bin" directory. Or you can simply run `gem install astropanel`.
+
 This software runs in a terminal emulator and requires Ruby to be installed.  It is tested only on Linux so far.
 
 The stack is shown to the top left: L is the "Last X" register showing the previous value in X. T, Z, Y and X registers comprise the operating stack. Toggle US and European number formats by pressing '. 
