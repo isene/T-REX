@@ -292,7 +292,7 @@ end
 
 # FUNCTIONS
 def getchr # PROCESS KEY PRESSES
-  c = STDIN.getch
+  c = STDIN.getch(min: 0, time: 0.1)
   case c
   when "\e"    # ANSI escape sequences
     case $stdin.getc
