@@ -1,6 +1,8 @@
 # T-REX
 T-REX - Terminal Rpn calculator EXperiment
 
+Created using the [rcurses](https://github.com/isene/rcurses) library - the smoothest way to build curses applications in Ruby.
+
 This is a Reverse Polish Notation calculator similar to the traditional calculators from Hewlett Packard. See https://www.hpmuseum.org/rpn.htm for info on RPN.
 
 Install by cloning this repo and putting `astropanel.rb` into your "bin" directory. Or you can simply run `gem install astropanel`.
