@@ -27,12 +27,13 @@ Store/recall using capital "S"/"R". "M" clears the regs.
 
 You can undo all the way to the beginning of the session.
 
-The 'H' key toggles the help text in the right pane. 
+The 'H' key toggles between the help text in the right pane or a continuous printout.  Save the full printout to ~/t-rex.txt with "Ctrl-P".
+
+The stack, register contents, modes and help text settings are saved on Quit.
+
+Additionally, you can access the "Ruby mode" via '@'. Here you can address the stack directly, e.g. 'x = y + (z / t); puts x'. Quit Ruby mode with ESC.
  
-The stack, register contents and modes are saved on Quit.
- 
-Alternative keys: Left/Right keys (in addition to "<") exchanges X and Y
-registers. Backspace clears the x register.
+Alternative keys: Left/Right keys (in addition to "<") exchanges X and Y registers. Backspace clears the x register.
 
 ## Copy/Paste to/from X
 You can paste numbers directly to the x register the normal way (middle mouse
@@ -43,7 +44,7 @@ To paste the full set of 10 memory registers to the clipboard, use "Y".
 
 ## Ruby mode
 Additionally, for a world of possibilities, you can access the "Ruby mode" via '@'.
-Here you can address the stack directly, e.g. x = y + (z / t). Quit Ruby mode with Ctrl-C.
+Here you can address the stack directly, e.g. x = y + (z / t). Quit Ruby mode with ESC.
 
 ## Screencast
 
