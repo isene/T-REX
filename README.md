@@ -11,6 +11,8 @@ This software runs in a terminal emulator and requires Ruby to be installed.  It
 
 The stack is shown to the top left: L is the "Last X" register showing the previous value in X. T, Z, Y and X registers comprise the operating stack. Toggle US and European number formats by pressing '. 
 
+When entering a number into X, use 'h' to change the sign and 'e' to write an exponent (10^x). Entering "123e4" becomes "1230000". Use 'H' to enter a minus sign after an 'e' to get a negative exponent. Entering "123e-4" becomes "0.0123". 
+
 Functions available are shown under the stack registers. The orange symbol corresponds to the key to be pressed. For functions above each label (grey functions), press the Control key (Ctrl) and the orange key (asin = Ctrl+i).
 
 For Rectangular to Polar conversions:

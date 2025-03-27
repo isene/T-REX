@@ -29,7 +29,8 @@ help = <<HELPTEXT
   Toggle US and European number formats by pressing '. 
  
   When entering a number into X, use 'h' to change the sign and 'e' to write an
-  exponent (10^x). Entering "123e4" becomes "1230000".
+  exponent (10^x). Entering "123e4" becomes "1230000". Use 'H' to enter a minus sign
+  after an 'e' to get a negative exponent. Entering "123e-4" becomes "0.0123". 
 
   Functions available are shown under the stack registers. The orange symbol 
   corresponds to the key to be pressed. For functions above each label (grey 
@@ -635,7 +636,7 @@ def entry(chr) # X REGISTER ENTRY
   pos = 1
   Rcurses::Cursor.set(7,33)
   Rcurses::Cursor.show
-  while %w[0 1 2 3 4 5 6 7 8 9 . , h e RIGHT LEFT HOME END DEL BACK WBACK LDEL].include?(chr)
+  while %w[0 1 2 3 4 5 6 7 8 9 . , h H e RIGHT LEFT HOME END DEL BACK WBACK LDEL].include?(chr)
     @p_x.puts(num)
     chr = getchr
     case chr
@@ -679,6 +680,9 @@ def entry(chr) # X REGISTER ENTRY
         num.insert(0, "-")
         pos += 1
       end
+    when 'H'
+      num.insert(pos,"-")
+      pos += 1
     when 'e'
       num.insert(pos,chr)
       pos += 1
@@ -691,9 +695,8 @@ def entry(chr) # X REGISTER ENTRY
   num = "" if %w[DOWN UP].include?(chr)
   num.gsub!(/,/, '.')
   if num.include?("e")
-    n    = num.split("e").first(2)
-    n[1] = (10 ** n[1].to_i)
-    num  = n.join
+    base, exp_str = num.split("e")
+    num = (base.to_f * (10 ** exp_str.to_i)).to_s
   end
   num != "" ? number = num.to_f : number = ""
   Rcurses::Cursor.hide
