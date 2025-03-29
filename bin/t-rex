@@ -12,7 +12,7 @@
 #             for any damages resulting from its use. Further, I am under no
 #             obligation to maintain or extend this software. It is provided 
 #             on an 'as is' basis without any expressed or implied warranty.
-@version    = "2.0" # Full rewrite with rcurses, face lift, new functionality, bug fixes
+@version    = "2.2.1" # Clear screen upon exit
 
 require 'rcurses'
 include Rcurses::Input
@@ -613,6 +613,7 @@ def main_getkey(c) # GET KEY FROM USER
     getchr
     @hlp ? help : @p_hlp.puts("")
   when 'Q' # QUIT 
+    Rcurses.clear_screen
     exit 0
   when /[0-9.,]/ # Go to entry mode for x
     @stk.lift
