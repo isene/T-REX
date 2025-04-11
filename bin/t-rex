@@ -12,10 +12,18 @@
 #             for any damages resulting from its use. Further, I am under no
 #             obligation to maintain or extend this software. It is provided 
 #             on an 'as is' basis without any expressed or implied warranty.
-@version    = "2.2.1" # Clear screen upon exit
+@version    = "2.3.1" # Upgraded to new version of rcurses
 
 require 'rcurses'
 include Rcurses::Input
+
+class Rcurses::Pane
+  def clear
+    @text = ""
+    @ix   = 0
+    full_refresh
+  end
+end
 
 def help # HELP text
 help = <<HELPTEXT
@@ -64,7 +72,7 @@ HELPTEXT
   if @hlp
     @p_hlp.fg = 239
     @p_hlp.ix = 0
-    @p_hlp.puts(help)
+    @p_hlp.say(help)
   else
     @p_hlp.ix = @history.length - @h + 3
     histprint
@@ -353,7 +361,7 @@ def histprint
   print = @history.join("\n ")
   @p_hlp.ix = 0 if @p_hlp.ix < 0
   @p_hlp.fg = 145
-  @p_hlp.puts(print)
+  @p_hlp.say(print)
   return print
 end
 def num_format(n) # THE NUMBER FORMAT FUNCTION
@@ -511,14 +519,14 @@ def main_getkey(c) # GET KEY FROM USER
   when 'M'
     @reg = %w[0 0 0 0 0 0 0 0 0 0] 
   when 'S' # Store to Reg
-    @p_x.puts(" Store x in Reg #(0-9)")
+    @p_x.say(" Store x in Reg #(0-9)")
     r = getchr
     if r =~ /[0-9]/
       @reg[r.to_i] = @stk.x
     end
     history("STO #{r}")
   when 'R'  # Recall from Reg
-    @p_x.puts(" Recall from Reg #(0-9)")
+    @p_x.say(" Recall from Reg #(0-9)")
     r = getchr
     if r =~ /[0-9]/
       @stk.lift
@@ -526,14 +534,14 @@ def main_getkey(c) # GET KEY FROM USER
     end
     history("RCL #{r}")
   when 's'     # Set Sci size/limit
-    @p_x.puts(" Sci notation limit (2-9)")
+    @p_x.say(" Sci notation limit (2-9)")
     s = getchr
     if s =~ /[2-9]/
       @sci = s.to_i
     end
     history("Sci #{s}")
   when 'f'     # Set Fix size
-    @p_x.puts(" Fixed decimals (0-9)")
+    @p_x.say(" Fixed decimals (0-9)")
     f = getchr
     if f =~ /[0-9]/
       @fix = f.to_i
@@ -594,7 +602,7 @@ def main_getkey(c) # GET KEY FROM USER
   when '@' # Ruby console
     @p_hlp.fg = 168
     loop do
-      @p_hlp.puts("")
+      @p_hlp.say("")
       @p_hlp.prompt = " Ruby: "
       @p_hlp.editline
       Rcurses::Cursor.set(4,36)
@@ -611,9 +619,10 @@ def main_getkey(c) # GET KEY FROM USER
     end
     @p_hlp.fg = 239
     getchr
-    @hlp ? help : @p_hlp.puts("")
+    @hlp ? help : @p_hlp.say("")
   when 'Q' # QUIT 
     Rcurses.clear_screen
+    Rcurses::Cursor.show
     exit 0
   when /[0-9.,]/ # Go to entry mode for x
     @stk.lift
@@ -638,7 +647,9 @@ def entry(chr) # X REGISTER ENTRY
   Rcurses::Cursor.set(7,33)
   Rcurses::Cursor.show
   while %w[0 1 2 3 4 5 6 7 8 9 . , h H e RIGHT LEFT HOME END DEL BACK WBACK LDEL].include?(chr)
-    @p_x.puts(num)
+    @p_x.clear
+    @p_x.say(num)
+    Rcurses::Cursor.show
     chr = getchr
     case chr
     when 'RIGHT'
@@ -690,6 +701,7 @@ def entry(chr) # X REGISTER ENTRY
     when /[0-9.,]/
       num.insert(pos,chr)
       pos += 1
+      @p_x.say(num)
     end
     Rcurses::Cursor.col(33 - num.length + pos)
   end
@@ -717,11 +729,11 @@ def refresh # REFRESH ALL PANES
   @p_x.refresh  
 end
 def pstack # PRINT STACK (XYZTL)
-  @p_l.puts(num_format(@stk.l))  
-  @p_t.puts(num_format(@stk.t))  
-  @p_z.puts(num_format(@stk.z))  
-  @p_y.puts(num_format(@stk.y))  
-  @p_x.puts(num_format(@stk.x).b)  
+  @p_l.say(num_format(@stk.l))  
+  @p_t.say(num_format(@stk.t))  
+  @p_z.say(num_format(@stk.z))  
+  @p_y.say(num_format(@stk.y))  
+  @p_x.say(num_format(@stk.x).b)  
 end
 def pregs # PRINT CONTENT OF REGS (0-9)
   @p_reg.text = "\n"
@@ -732,7 +744,7 @@ def pregs # PRINT CONTENT OF REGS (0-9)
   @p_reg.refresh
 end
 def error(err) # PRINT ERRORS TO X
-  @p_x.puts(err)
+  @p_x.say(err)
   @history.insert(-2, err)
   getchr
 end
@@ -754,7 +766,7 @@ refresh
 Rcurses::Cursor.hide
 begin # Capture main loop
   loop do # Main loop
-    @p_inf.puts("  #{@mod} Sci=#{@sci} Fix=#{@fix}".i)
+    @p_inf.say("  #{@mod} Sci=#{@sci} Fix=#{@fix}".i)
     pstack
     pregs
     @t = @stk.dup
