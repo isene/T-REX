@@ -12,18 +12,10 @@
 #             for any damages resulting from its use. Further, I am under no
 #             obligation to maintain or extend this software. It is provided 
 #             on an 'as is' basis without any expressed or implied warranty.
-@version    = "2.3.1" # Upgraded to new version of rcurses
+@version    = "2.3.2" # Upgraded to new version of rcurses
 
 require 'rcurses'
 include Rcurses::Input
-
-class Rcurses::Pane
-  def clear
-    @text = ""
-    @ix   = 0
-    full_refresh
-  end
-end
 
 def help # HELP text
 help = <<HELPTEXT

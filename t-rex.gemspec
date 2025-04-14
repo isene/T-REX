@@ -1,9 +1,9 @@
 Gem::Specification.new do |s|
   s.name        = 't-rex'
-  s.version     = '2.3.1'
+  s.version     = '2.3.2'
   s.licenses    = ['Unlicense']
   s.summary     = "T-REX - Terminal Rpn calculator EXperiment"
-  s.description = "This is a terminal curses RPN calculator similar to the traditional calculators from Hewlett Packard. See https://www.hpmuseum.org/rpn.htm for info on RPN (Reverse Polish Notation). New in 2.3: Upgraded to new version of rcurses. 2.3.1: Fix for rcurses."
+  s.description = "This is a terminal curses RPN calculator similar to the traditional calculators from Hewlett Packard. See https://www.hpmuseum.org/rpn.htm for info on RPN (Reverse Polish Notation). New in 2.3: Upgraded to new version of rcurses. 2.3.2: Fix for rcurses."
   s.authors     = ["Geir Isene"]
   s.email       = 'g@isene.com'
   s.files       = ["bin/t-rex"]
