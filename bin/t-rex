@@ -12,7 +12,7 @@
 #             for any damages resulting from its use. Further, I am under no
 #             obligation to maintain or extend this software. It is provided 
 #             on an 'as is' basis without any expressed or implied warranty.
-@version    = "2.3.2" # Upgraded to new version of rcurses
+@version    = "2.3.3" # Fixed cursor positioning
 
 require 'rcurses'
 include Rcurses::Input
@@ -622,7 +622,6 @@ def main_getkey(c) # GET KEY FROM USER
     number, c = entry(chr)
     if number != ""
       @stk.l = @stk.x
-      @stk.lift unless @stk.x == 0
       @stk.x = number
     end
     history(number.to_s)
@@ -636,11 +635,12 @@ end
 def entry(chr) # X REGISTER ENTRY
   num = chr
   pos = 1
-  Rcurses::Cursor.set(7,33)
-  Rcurses::Cursor.show
   while %w[0 1 2 3 4 5 6 7 8 9 . , h H e RIGHT LEFT HOME END DEL BACK WBACK LDEL].include?(chr)
     @p_x.clear
     @p_x.say(num)
+    # Position cursor at the right place in the X register (row 7, right-aligned in 30-char width)
+    cursor_col = 33 - num.length + pos
+    Rcurses::Cursor.set(7, cursor_col)
     Rcurses::Cursor.show
     chr = getchr
     case chr
@@ -693,9 +693,7 @@ def entry(chr) # X REGISTER ENTRY
     when /[0-9.,]/
       num.insert(pos,chr)
       pos += 1
-      @p_x.say(num)
     end
-    Rcurses::Cursor.col(33 - num.length + pos)
   end
   num = "" if %w[DOWN UP].include?(chr)
   num.gsub!(/,/, '.')
