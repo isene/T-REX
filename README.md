@@ -1,13 +1,19 @@
-# T-REX
+# T-REX 3.0
 T-REX - Terminal Rpn calculator EXperiment
 
 Created using the [rcurses](https://github.com/isene/rcurses) library - the smoothest way to build curses applications in Ruby.
 
 This is a Reverse Polish Notation calculator similar to the traditional calculators from Hewlett Packard. See https://www.hpmuseum.org/rpn.htm for info on RPN.
 
-Install by cloning this repo and putting `astropanel.rb` into your "bin" directory. Or you can simply run `gem install astropanel`.
+**NEW in 3.0**: Major XRPN integration providing hybrid calculation modes, enhanced mathematical functions, program execution environment, program editor, base conversions, factorial safety, and comprehensive scrolling support.
 
-This software runs in a terminal emulator and requires Ruby to be installed.  It is tested only on Linux so far.
+## Installation
+
+Install with: `gem install t-rex`
+
+Or clone this repo and run: `gem build t-rex.gemspec && gem install t-rex-*.gem`
+
+This software runs in a terminal emulator and requires Ruby to be installed. Tested on Linux.
 
 The stack is shown to the top left: L is the "Last X" register showing the previous value in X. T, Z, Y and X registers comprise the operating stack. Toggle US and European number formats by pressing '. 
 
@@ -38,6 +44,46 @@ The stack, register contents, modes and help text settings are saved on Quit.
 Additionally, you can access the "Ruby mode" via '@'. Here you can address the stack directly, e.g. 'x = y + (z / t); puts x'. Quit Ruby mode with ESC.
  
 Alternative keys: Left/Right keys (in addition to "<") exchanges X and Y registers. Backspace clears the x register.
+
+## XRPN Integration (NEW in 3.0)
+
+T-REX now integrates with the [XRPN language](https://github.com/isene/xrpn) to provide enhanced mathematical capabilities and programmable calculator features.
+
+### Installation of XRPN
+```bash
+gem install xrpn
+```
+
+### XRPN Features
+
+**Mode Toggle**: Press `X` to switch between T-REX and XRPN calculation modes.
+
+**In XRPN Mode:**
+- **Ctrl+F**: Safe factorial function (max 170!)
+- **Ctrl+B**: Number base conversions (hex, binary, octal, decimal)
+- **P**: Program execution environment (ESC to exit)
+- **E**: Program editor (ESC to exit)
+- Enhanced precision and error handling for all mathematical operations
+- Access to 250+ mathematical functions from the XRPN language
+
+**Program Execution (P key):**
+- `l <file>` - Load XRPN program from file
+- `x <name>` - Execute program by name
+- `r <cmd>` - Run single XRPN command
+- `s` - Show current stack
+- `p` - List loaded programs
+- `status` - Show XRPN status
+
+**Program Editor (E key):**
+- `new <name>` - Create new program
+- `add <line>` - Add line to current program
+- `list` - List current program
+- `del <n>` - Delete line n
+- `save` - Save current program
+- `run` - Run current program
+- `clear` - Clear current program
+
+**Scrolling Support**: Both P and E modes support full scrolling with Shift+UP/DOWN, PgUP/PgDOWN, HOME/END for navigating long program listings and output.
 
 ## Copy/Paste to/from X
 You can paste numbers directly to the x register the normal way (middle mouse

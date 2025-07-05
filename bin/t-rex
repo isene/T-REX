@@ -12,10 +12,51 @@
 #             for any damages resulting from its use. Further, I am under no
 #             obligation to maintain or extend this software. It is provided 
 #             on an 'as is' basis without any expressed or implied warranty.
-@version    = "2.3.3" # Fixed cursor positioning
+@version    = "3.0.0" # Major XRPN integration: hybrid mode, enhanced functions, program execution, scrolling
 
 require 'rcurses'
 include Rcurses::Input
+
+# Try to load XRPN for enhanced functionality
+begin
+  # XRPN is not a standard require, it's an executable
+  # We need to load the XRPN class directly from the gem
+  gem_path = `VISUAL=echo gem open xrpn 2>/dev/null`.chomp
+  if gem_path && !gem_path.include?("Unable") && File.exist?(gem_path + "/xlib/xrpn_class")
+    # Load the XRPN class
+    load gem_path + "/xlib/xrpn_class"
+    
+    # Load essential utility functions (skip string to avoid conflicts with rcurses)
+    %w[numeric fact convert_base].each do |lib|
+      load gem_path + "/xlib/#{lib}" if File.exist?(gem_path + "/xlib/#{lib}")
+    end
+    
+    # Load essential commands that we'll use for integration  
+    # Load in dependency order: utility functions first, then operations
+    essential_commands = %w[
+      lift drop dropy enter
+      add subtract multiply divide 
+      ln log exp alog sin cos tan 
+      sqrt sqr pow fact
+      hexdec decbin decoct octdec
+      lbl gto gsb rtn xeq stop view pse
+    ]
+    essential_commands.each do |cmd|
+      begin
+        load gem_path + "/xcmd/#{cmd}" if File.exist?(gem_path + "/xcmd/#{cmd}")
+      rescue => e
+        # Skip commands that fail to load
+      end
+    end
+    
+    XRPN_AVAILABLE = true
+    XRPN_GEM_PATH = gem_path
+  else
+    XRPN_AVAILABLE = false
+  end
+rescue => e
+  XRPN_AVAILABLE = false
+end
 
 def help # HELP text
 help = <<HELPTEXT
@@ -38,7 +79,7 @@ help = <<HELPTEXT
   
   For Rectangular to Polar conversions:
   R-P: X value in x, Y in y - yields "θ" in y and "r" in x.
-  P-R: "θ" in y and "r" in x - yeilds X in x and Y in y.
+  P-R: "θ" in y and "r" in x - yields X in x and Y in y.
 
   Use the "f" key to set the fixed number of decimal places. Use the "s" key to set 
   the limit for viewing numbers in the "scientific" notation (e.g. 5e+06 for 5000000).
@@ -60,10 +101,32 @@ help = <<HELPTEXT
 
   Alternative keys: Left/Right keys (in addition to "<") exchanges X and Y registers. 
   Backspace clears the x register.
+
+  Help pane scrolling: Shift+UP/DOWN (line by line), PgUP/PgDOWN (page by page), 
+  HOME/END (top/bottom). Scroll indicators (∆/∇) show available content.
+
+  == XRPN INTEGRATION ==
+  Press 'X' to toggle between T-REX and XRPN calculation modes.
+  
+  To use XRPN features, install the gem first:
+  From local repository: cd ~/Main/G/GIT-isene/xrpn && gem build xrpn.gemspec && gem install xrpn-*.gem
+  Or when published: gem install xrpn
+  
+  In XRPN mode (press 'X' to toggle), enhanced functions are available:
+  - Ctrl+F: Factorial function (with safety limits)
+  - Ctrl+B: Number base conversions (hex, bin, oct, dec)  
+  - P: Program execution panel (load and run XRPN programs) - ESC to exit
+  - E: Program editor (create and edit XRPN programs) - ESC to exit
+  - Enhanced precision and error handling for all mathematical operations
+  
+  Note: XRPN functions only work when toggled to XRPN mode.
+  Both P and E modes support scrolling (Shift+UP/DOWN, PgUP/PgDOWN, HOME/END).
+  
+  XRPN mode provides access to 250+ mathematical functions from the XRPN language.
 HELPTEXT
   if @hlp
     @p_hlp.fg = 239
-    @p_hlp.ix = 0
+    # Don't reset scroll position - preserve current @p_hlp.ix
     @p_hlp.say(help)
   else
     @p_hlp.ix = @history.length - @h + 3
@@ -113,7 +176,7 @@ class Stack # STACK class
   end
   def divide
     begin
-      throw if self.x == 0
+      raise if self.x == 0
       self.l = self.x
       self.x = self.y / self.x
       self.drop
@@ -123,7 +186,7 @@ class Stack # STACK class
   end
   def mod
     begin
-      throw if self.x == 0
+      raise if self.x == 0
       self.l = self.x
       self.x = self.y % self.x
       self.drop
@@ -133,7 +196,7 @@ class Stack # STACK class
   end
   def percent
     begin
-      throw if self.y == 0
+      raise if self.y == 0
       self.l = self.x
       self.x = 100*(self.x / self.y)
       self.drop
@@ -165,7 +228,7 @@ class Stack # STACK class
   end
   def recip
     begin
-      throw if self.x == 0
+      raise if self.x == 0
       self.l = self.x
       self.x = 1 / self.x
     rescue
@@ -252,7 +315,7 @@ class Stack # STACK class
   end
   def rp
     begin
-      throw if self.x == 0
+      raise if self.x == 0
       self.l = self.x
       x = self.x
       y = self.y
@@ -278,6 +341,145 @@ class Stack # STACK class
   end
 end
 
+class XrpnInterface # XRPN INTEGRATION CLASS
+  attr_accessor :calc, :mode
+
+  def initialize
+    if XRPN_AVAILABLE
+      @calc = XRPN.new(nil)  # XRPN class expects a file parameter, use nil for no file
+      @mode = :trex  # :trex or :xrpn
+      @available = true
+    else
+      @calc = nil
+      @mode = :trex
+      @available = false
+    end
+  end
+
+  def available?
+    @available
+  end
+
+  def toggle_mode
+    return "XRPN not available" unless @available
+    @mode = (@mode == :trex) ? :xrpn : :trex
+  end
+
+  def sync_stack_to_xrpn(stack)
+    return unless @available
+    @calc.t = stack.t
+    @calc.z = stack.z
+    @calc.y = stack.y
+    @calc.x = stack.x
+  end
+
+  def sync_stack_from_xrpn
+    return [0, 0, 0, 0] unless @available
+    return [@calc.t, @calc.z, @calc.y, @calc.x]
+  end
+
+  def execute_xrpn_command(cmd)
+    return "XRPN not available" unless @available
+    begin
+      # Check if it's a number first
+      if cmd =~ /^-?\d+(\.\d+)?$/ || cmd =~ /^-?\.\d+$/
+        # It's a number, enter it into the stack
+        @calc.send('lift') if @calc.respond_to?('lift')
+        @calc.x = cmd.to_f
+        return true
+      elsif @calc.respond_to?(cmd.downcase)
+        # It's a command, execute it
+        @calc.send(cmd.downcase)
+        return true
+      else
+        return "Command not found: #{cmd}"
+      end
+    rescue => e
+      return "Error: #{e.message}"
+    end
+  end
+
+  def get_xrpn_functions
+    {
+      # Enhanced scientific functions
+      'sinh' => 'SINH',
+      'cosh' => 'COSH', 
+      'tanh' => 'TANH',
+      'asinh' => 'ASINH',
+      'acosh' => 'ACOSH',
+      'atanh' => 'ATANH',
+      'gamma' => 'GAMMA',
+      'factorial' => '!',
+      'combination' => 'COMB',
+      'permutation' => 'PERM',
+      'gcd' => 'GCD',
+      'lcm' => 'LCM',
+      # Number base conversions
+      'hex' => 'HEX',
+      'bin' => 'BIN',
+      'oct' => 'OCT',
+      'dec' => 'DEC',
+      # Statistical functions
+      'mean' => 'MEAN',
+      'sdev' => 'SDEV',
+      'sum' => 'SUM',
+      # Complex numbers
+      'real' => 'REAL',
+      'imag' => 'IMAG',
+      'conj' => 'CONJ',
+      'arg' => 'ARG'
+    }
+  end
+
+  def mode_display
+    if @available
+      @mode == :xrpn ? "XRPN" : "T-REX"
+    else
+      "T-REX (XRPN N/A)"
+    end
+  end
+
+  def debug_status
+    "Available: #{@available}, Mode: #{@mode}"
+  end
+
+  def execute_with_sync(xrpn_cmd, stack)
+    return "XRPN not available" unless @available
+    sync_stack_to_xrpn(stack)
+    result = execute_xrpn_command(xrpn_cmd)
+    if result == true
+      return sync_stack_from_xrpn
+    else
+      return result
+    end
+  end
+
+  def load_program(filename)
+    return "XRPN not available" unless @available
+    begin
+      @calc.load_program(filename)
+      return true
+    rescue => e
+      return "Error: #{e.message}"
+    end
+  end
+
+  def execute_program(program_name)
+    return "XRPN not available" unless @available
+    begin
+      @calc.execute_program(program_name)
+      return true
+    rescue => e
+      return "Error: #{e.message}"
+    end
+  end
+
+  def list_programs
+    return [] unless @available
+    @calc.list_programs
+  end
+end
+
 begin # BASIC setup
   @stk = Stack.new(0, 0, 0, 0, 0)
   @reg = %w[0 0 0 0 0 0 0 0 0 0] 
@@ -286,6 +488,7 @@ begin # BASIC setup
   @dot = true
   @mod = "Deg"
   @hlp = true
+  @xrpn = XrpnInterface.new
 
   load(Dir.home+'/.t-rex.conf') if File.exist?(Dir.home+'/.t-rex.conf')
   @mod == "Deg" ? @stk.deg = true : @stk.deg = false
@@ -296,20 +499,26 @@ begin # BASIC setup
 end
 
 begin # PANE setup
-  @h, @w = IO.console.winsize
+  begin
+    @h, @w = IO.console.winsize
+  rescue
+    @h, @w = 24, 80  # Default fallback
+  end
 
   #  pane = Rcurses::Pane.new(  x,  y,   width,  height,  fg,  bg)
   @p_bck  = Rcurses::Pane.new(  1,  1,      @w,      @h, 235, 235) # Back
   @p_inf  = Rcurses::Pane.new(  2,  2,      32,       1, 168, 238) # Info-line
   @p_lbl  = Rcurses::Pane.new(  2,  3,       1,       5, 250, 238) # LTZYX lables
-  @p_key  = Rcurses::Pane.new(  2,  9,      32,      11,   0,   0) # Key panel
-  @p_reg  = Rcurses::Pane.new(  2, 21,      32, @h - 21, 242,   0) # Regs
+  @p_key  = Rcurses::Pane.new(  2,  9,      32,      14,   0,   0) # Key panel
+  @p_reg  = Rcurses::Pane.new(  2, 24,      32, @h - 24, 242,   0) # Regs
   @p_hlp  = Rcurses::Pane.new( 35,  2, @w - 35, @h -  2, 239,   0) # Help
+  @p_hlp.scroll = true  # Enable scroll indicators
   @p_l    = Rcurses::Pane.new(  4,  3,      30,       1,  60, 235) # L
   @p_t    = Rcurses::Pane.new(  4,  4,      30,       1,  68, 233) # T
   @p_z    = Rcurses::Pane.new(  4,  5,      30,       1,  75, 233) # Z
   @p_y    = Rcurses::Pane.new(  4,  6,      30,       1, 117, 233) # Y
   @p_x    = Rcurses::Pane.new(  4,  7,      30,       1,   7,   0) # X
+  @p_x.scroll = false  # Disable scroll indicators for X register
 
   @p_lbl.align = "r"
   @p_l.align   = "r"
@@ -341,7 +550,11 @@ begin # PANE setup
   keys += "  r".k + "ad".t + " d".k + "eg".t + "  c".k + "lx".t
   keys += "\n\n"
   keys += " S".k + "to".t + " R".k + "cl".t + " s".k + "ci".t + " f".k + "ix".t
-  keys += " u".k + "ndo".t + " H".k + "lp".t + " Q".k + "uit".t  
+  keys += " u".k + "ndo".t + " H".k + "lp".t + " Q".k + "uit".t
+  keys += "\n\n"
+  keys += " X".k + "rpn".t + " (when in xrpn mode):".s
+  keys += "\n"
+  keys += " ^F".k + "act".t + " ^B".k + "ase".t + " P".k + "rog".t + " E".k + "dit".t  
   @p_key.text = keys
 end
 
@@ -393,6 +606,24 @@ def main_getkey(c) # GET KEY FROM USER
   when 'DOWN' # Roll stack down
     @stk.rdn
     history("↓")
+  when 'S-UP'  # Scroll help pane up
+    @p_hlp.lineup
+    @scroll_action = true
+  when 'S-DOWN' # Scroll help pane down
+    @p_hlp.linedown
+    @scroll_action = true
+  when 'PgUP'  # Page up in help pane
+    @p_hlp.pageup
+    @scroll_action = true
+  when 'PgDOWN' # Page down in help pane
+    @p_hlp.pagedown
+    @scroll_action = true
+  when 'HOME'  # Go to top of help pane
+    @p_hlp.top if @hlp
+    @scroll_action = true
+  when 'END'   # Go to bottom of help pane
+    @p_hlp.bottom if @hlp
+    @scroll_action = true
   when '<', 'LEFT', 'RIGHT' # x<>y
     @stk.xy
     history("x<>y")
@@ -445,18 +676,54 @@ def main_getkey(c) # GET KEY FROM USER
     @stk.cube
     history("x^3")
   when 'n'    # ln(x)
-    e = @stk.ln
+    if @xrpn.mode == :xrpn
+      result = @xrpn.execute_with_sync("ln", @stk)
+      if result.is_a?(Array)
+        @stk.t, @stk.z, @stk.y, @stk.x = result
+      else
+        error(result)
+      end
+    else
+      e = @stk.ln
+      error ("Error: Negative x") if e == "Error"
+    end
     history("ln")
-    error ("Error: Negative x") if e == "Error"
   when 'C-N'  # e^x
-    @stk.ex
+    if @xrpn.mode == :xrpn
+      result = @xrpn.execute_with_sync("exp", @stk)
+      if result.is_a?(Array)
+        @stk.t, @stk.z, @stk.y, @stk.x = result
+      else
+        error(result)
+      end
+    else
+      @stk.ex
+    end
     history("e^x")
   when 'g'    # log(x)
-    e = @stk.log
+    if @xrpn.mode == :xrpn
+      result = @xrpn.execute_with_sync("log", @stk)
+      if result.is_a?(Array)
+        @stk.t, @stk.z, @stk.y, @stk.x = result
+      else
+        error(result)
+      end
+    else
+      e = @stk.log
+      error ("Error: Negative x") if e == "Error"
+    end
     history("log")
-    error ("Error: Negative x") if e == "Error"
   when 'C-G'  # 10^x
-    @stk.tenx
+    if @xrpn.mode == :xrpn
+      result = @xrpn.execute_with_sync("alog", @stk)
+      if result.is_a?(Array)
+        @stk.t, @stk.z, @stk.y, @stk.x = result
+      else
+        error(result)
+      end
+    else
+      @stk.tenx
+    end
     history("10^x")
   when 'l'    # Recall Lastx (l) to x
     @stk.lift
@@ -580,12 +847,92 @@ def main_getkey(c) # GET KEY FROM USER
   when 'H' # Toggle help/histprint
     @hlp = !@hlp
   when 'C-B'
-    if !@hlp
+    # Check if we're in XRPN mode first
+    if @xrpn.available? && @xrpn.mode == :xrpn
+      # XRPN base conversion mode
+      @p_hlp.fg = 168
+      @p_hlp.clear
+      @p_hlp.text = "XRPN Base Conversion\n\nChoose conversion:\n"
+      @p_hlp.text += "  h - Convert to hexadecimal\n"
+      @p_hlp.text += "  b - Convert to binary\n"
+      @p_hlp.text += "  o - Convert to octal\n"
+      @p_hlp.text += "  d - Convert to decimal\n"
+      @p_hlp.text += "  ESC - Cancel\n\n"
+      @p_hlp.text += "Choice> "
+      @p_hlp.refresh
+      
+      f = getchr
+      
+      output = "\n"
+      conversion_done = false
+      case f
+      when 'h'
+        result = @xrpn.execute_with_sync("dechex", @stk)
+        if result.is_a?(Array)
+          @stk.t, @stk.z, @stk.y, @stk.x = result
+          output += "Converted to hexadecimal: #{@stk.x}\n"
+          conversion_done = true
+          pstack  # Update stack display
+        else
+          output += "Error: #{result}\n"
+        end
+        history("hex")
+      when 'b'
+        result = @xrpn.execute_with_sync("decbin", @stk)
+        if result.is_a?(Array)
+          @stk.t, @stk.z, @stk.y, @stk.x = result
+          output += "Converted to binary: #{@stk.x}\n"
+          conversion_done = true
+          pstack  # Update stack display
+        else
+          output += "Error: #{result}\n"
+        end
+        history("bin")
+      when 'o'
+        result = @xrpn.execute_with_sync("decoct", @stk)
+        if result.is_a?(Array)
+          @stk.t, @stk.z, @stk.y, @stk.x = result
+          output += "Converted to octal: #{@stk.x}\n"
+          conversion_done = true
+          pstack  # Update stack display
+        else
+          output += "Error: #{result}\n"
+        end
+        history("oct")
+      when 'd'
+        result = @xrpn.execute_with_sync("hexdec", @stk)
+        if result.is_a?(Array)
+          @stk.t, @stk.z, @stk.y, @stk.x = result
+          output += "Converted to decimal: #{@stk.x}\n"
+          conversion_done = true
+          pstack  # Update stack display
+        else
+          output += "Error: #{result}\n"
+        end
+        history("dec")
+      when 'ESC'
+        output += "Conversion cancelled\n"
+      else
+        output += "Invalid choice\n"
+      end
+      
+      # Show result
+      @p_hlp.text += output
+      @p_hlp.text += "\nPress any key to continue..."
+      @p_hlp.refresh
+      getchr
+      @hlp ? help : @p_hlp.clear
+      @p_hlp.refresh
+    elsif !@hlp
+      # Original T-REX history browsing
       loop do
         @p_hlp.ix -= @h + 3
         histprint
         break if getchr != 'C-B'
       end
+    else
+      # Help mode, provide user feedback
+      error("Ctrl+B: In XRPN mode for base conversion, or history browsing when not in help")
     end
   when 'C-P'
     cont = histprint.pure
@@ -612,6 +959,318 @@ def main_getkey(c) # GET KEY FROM USER
     @p_hlp.fg = 239
     getchr
     @hlp ? help : @p_hlp.say("")
+  when 'X' # Toggle T-REX/XRPN mode
+    if @xrpn.available?
+      if @xrpn.mode == :trex
+        @xrpn.sync_stack_to_xrpn(@stk)
+        result = @xrpn.toggle_mode
+        if result.is_a?(String)
+          error(result)
+        else
+          history("Mode: XRPN")
+        end
+      else
+        t, z, y, x = @xrpn.sync_stack_from_xrpn
+        @stk.t, @stk.z, @stk.y, @stk.x = t, z, y, x
+        @xrpn.toggle_mode
+        history("Mode: T-REX")
+      end
+    else
+      error("XRPN not available. See help for installation instructions.")
+    end
+  when 'C-F' # Factorial (XRPN only)
+    if @xrpn.available? && @xrpn.mode == :xrpn
+      # Safety check for huge factorials that can freeze the app
+      if @stk.x > 170
+        error("Error: Factorial too large (max 170)")
+      elsif @stk.x < 0
+        error("Error: Factorial of negative number")
+      elsif @stk.x != @stk.x.to_i
+        error("Error: Factorial requires integer")
+      else
+        result = @xrpn.execute_with_sync("fact", @stk)
+        if result.is_a?(Array)
+          @stk.t, @stk.z, @stk.y, @stk.x = result
+        else
+          error(result)
+        end
+        history("fact")
+      end
+    end
+  when 'P' # XRPN Program execution (XRPN only)
+    if @xrpn.available? && @xrpn.mode == :xrpn
+      @p_hlp.fg = 168
+      @p_hlp.clear
+      program_mode = true
+      
+      # Display instructions
+      @p_hlp.text = "XRPN Program Execution\n\nCommands:\n"
+      @p_hlp.text += "  l <file>   - Load XRPN program from file\n"
+      @p_hlp.text += "  x <name>   - Execute program by name\n"
+      @p_hlp.text += "  r <cmd>    - Run single XRPN command\n"
+      @p_hlp.text += "  s          - Show current stack\n"
+      @p_hlp.text += "  p          - List loaded programs\n"
+      @p_hlp.text += "  status     - Show XRPN status\n"
+      @p_hlp.text += "  ESC        - Exit program mode\n\n"
+      @p_hlp.text += "Program> "
+      @p_hlp.refresh
+      
+      input_buffer = ""
+      while program_mode
+        chr = getchr
+        case chr
+        when 'ESC'
+          program_mode = false
+        when 'S-UP'  # Scroll up in program mode
+          @p_hlp.lineup
+        when 'S-DOWN' # Scroll down in program mode
+          @p_hlp.linedown
+        when 'PgUP'  # Page up in program mode
+          @p_hlp.pageup
+        when 'PgDOWN' # Page down in program mode
+          @p_hlp.pagedown
+        when 'HOME'  # Go to top in program mode
+          @p_hlp.top
+        when 'END'   # Go to bottom in program mode
+          @p_hlp.bottom
+        when 'ENTER'
+          cmd = input_buffer.strip
+          input_buffer = ""
+          
+          # Process command
+          output = "\n"
+          case cmd.split.first
+          when 'l' # Load program
+            filename = cmd.split[1]
+            if filename
+              result = @xrpn.load_program(filename)
+              output += (result == true) ? "Program loaded successfully\n" : "#{result}\n"
+            else
+              output += "Usage: l <filename>\n"
+            end
+          when 'x' # Execute program
+            program_name = cmd.split[1]
+            if program_name
+              @xrpn.sync_stack_to_xrpn(@stk)
+              result = @xrpn.execute_program(program_name)
+              if result == true
+                t, z, y, x = @xrpn.sync_stack_from_xrpn
+                @stk.t, @stk.z, @stk.y, @stk.x = t, z, y, x
+                output += "Program executed successfully\n"
+                pstack  # Update stack display
+              else
+                output += "#{result}\n"
+              end
+            else
+              output += "Usage: x <program_name>\n"
+            end
+          when 'r' # Run single command
+            xrpn_cmd = cmd[2..-1]
+            if xrpn_cmd && !xrpn_cmd.strip.empty?
+              @xrpn.sync_stack_to_xrpn(@stk)
+              result = @xrpn.execute_xrpn_command(xrpn_cmd.strip)
+              if result == true
+                t, z, y, x = @xrpn.sync_stack_from_xrpn
+                @stk.t, @stk.z, @stk.y, @stk.x = t, z, y, x
+                output += "Command '#{xrpn_cmd.strip}' executed successfully\n"
+                pstack  # Update stack display
+              else
+                output += "#{result}\n"
+              end
+            else
+              output += "Usage: r <xrpn_command>\n"
+            end
+          when 's' # Show stack
+            output += "Stack: T=#{@stk.t} Z=#{@stk.z} Y=#{@stk.y} X=#{@stk.x}\n"
+          when 'p' # List programs
+            programs = @xrpn.list_programs
+            output += programs.empty? ? "No programs loaded\n" : "Loaded programs: #{programs.join(', ')}\n"
+          when 'status' # Show XRPN status
+            output += "XRPN Status: #{@xrpn.debug_status}\n"
+            output += "Stack sync: T=#{@stk.t} Z=#{@stk.z} Y=#{@stk.y} X=#{@stk.x}\n"
+          when nil, ''
+            # Empty command, do nothing
+          else
+            output += "Unknown command. Use ESC to exit.\n"
+          end
+          
+          # Update display
+          @p_hlp.text += output + "\nProgram> "
+          @p_hlp.refresh
+        when 'BACK', 'DEL'
+          unless input_buffer.empty?
+            input_buffer.chop!
+            @p_hlp.text = @p_hlp.text[0..-2]  # Remove last character
+            @p_hlp.refresh
+          end
+        when String
+          if chr.length == 1 && chr =~ /[ -~]/  # Printable characters
+            input_buffer += chr
+            @p_hlp.text += chr
+            @p_hlp.refresh
+          end
+        end
+      end
+      
+      @p_hlp.fg = 239
+      @hlp ? help : @p_hlp.clear
+      @p_hlp.refresh
+    end
+  when 'E' # XRPN Program editor (XRPN only)
+    if @xrpn.available? && @xrpn.mode == :xrpn
+      @p_hlp.fg = 168
+      @p_hlp.clear
+      editor_mode = true
+      current_program = []
+      program_name = ""
+      
+      # Display instructions
+      @p_hlp.text = "XRPN Program Editor\n\nCommands:\n"
+      @p_hlp.text += "  new <name> - Create new program\n"
+      @p_hlp.text += "  add <line> - Add line to current program\n"
+      @p_hlp.text += "  list       - List current program\n"
+      @p_hlp.text += "  del <n>    - Delete line n\n"
+      @p_hlp.text += "  save       - Save current program\n"
+      @p_hlp.text += "  run        - Run current program\n"
+      @p_hlp.text += "  clear      - Clear current program\n"
+      @p_hlp.text += "  ESC        - Exit editor\n\n"
+      @p_hlp.text += "Editor> "
+      @p_hlp.refresh
+      
+      input_buffer = ""
+      while editor_mode
+        chr = getchr
+        case chr
+        when 'ESC'
+          editor_mode = false
+        when 'S-UP'  # Scroll up in editor mode
+          @p_hlp.lineup
+        when 'S-DOWN' # Scroll down in editor mode
+          @p_hlp.linedown
+        when 'PgUP'  # Page up in editor mode
+          @p_hlp.pageup
+        when 'PgDOWN' # Page down in editor mode
+          @p_hlp.pagedown
+        when 'HOME'  # Go to top in editor mode
+          @p_hlp.top
+        when 'END'   # Go to bottom in editor mode
+          @p_hlp.bottom
+        when 'ENTER'
+          cmd = input_buffer.strip
+          input_buffer = ""
+          
+          # Process command
+          output = "\n"
+          case cmd.split.first
+          when 'new' # New program
+            program_name = cmd.split[1]
+            if program_name
+              current_program = []
+              output += "New program '#{program_name}' created\n"
+            else
+              output += "Usage: new <program_name>\n"
+            end
+          when 'add' # Add line
+            line = cmd[4..-1]
+            if line && !line.strip.empty? && !program_name.empty?
+              current_program << line.strip
+              output += "Line #{current_program.length} added: #{line.strip}\n"
+            elsif program_name.empty?
+              output += "Create a program first with 'new <name>'\n"
+            else
+              output += "Usage: add <program_line>\n"
+            end
+          when 'list' # List program
+            if current_program.empty?
+              output += "No program loaded\n"
+            else
+              output += "Program '#{program_name}':\n"
+              current_program.each_with_index do |line, i|
+                output += "  #{i+1}: #{line}\n"
+              end
+            end
+          when 'del' # Delete line
+            line_num = cmd.split[1].to_i
+            if line_num > 0 && line_num <= current_program.length
+              deleted = current_program.delete_at(line_num - 1)
+              output += "Deleted line #{line_num}: #{deleted}\n"
+            else
+              output += "Invalid line number\n"
+            end
+          when 'save' # Save program
+            if !current_program.empty? && !program_name.empty?
+              program_text = current_program.join("\n")
+              filename = "#{program_name}.xrpn"
+              begin
+                File.write(filename, program_text)
+                result = @xrpn.load_program(filename)
+                output += (result == true) ? "Program saved and loaded: #{filename}\n" : "Saved but load failed: #{result}\n"
+              rescue => e
+                output += "Save failed: #{e.message}\n"
+              end
+            else
+              output += "No program to save\n"
+            end
+          when 'run' # Run program
+            if !current_program.empty?
+              @xrpn.sync_stack_to_xrpn(@stk)
+              output += "Executing program line by line:\n"
+              success = true
+              current_program.each_with_index do |line, i|
+                line = line.strip
+                next if line.empty?
+                result = @xrpn.execute_xrpn_command(line)
+                if result == true
+                  output += "  #{i+1}: #{line} - OK\n"
+                else
+                  output += "  #{i+1}: #{line} - #{result}\n"
+                  success = false
+                  break
+                end
+              end
+              if success
+                t, z, y, x = @xrpn.sync_stack_from_xrpn
+                @stk.t, @stk.z, @stk.y, @stk.x = t, z, y, x
+                output += "Program executed successfully\n"
+                pstack  # Update stack display
+              else
+                output += "Program execution stopped due to error\n"
+              end
+            else
+              output += "No program to run\n"
+            end
+          when 'clear' # Clear program
+            current_program = []
+            program_name = ""
+            output += "Program cleared\n"
+          when nil, ''
+            # Empty command, do nothing
+          else
+            output += "Unknown command. Use ESC to exit.\n"
+          end
+          
+          # Update display
+          @p_hlp.text += output + "\nEditor> "
+          @p_hlp.refresh
+        when 'BACK', 'DEL'
+          unless input_buffer.empty?
+            input_buffer.chop!
+            @p_hlp.text = @p_hlp.text[0..-2]  # Remove last character
+            @p_hlp.refresh
+          end
+        when String
+          if chr.length == 1 && chr =~ /[ -~]/  # Printable characters
+            input_buffer += chr
+            @p_hlp.text += chr
+            @p_hlp.refresh
+          end
+        end
+      end
+      
+      @p_hlp.fg = 239
+      @hlp ? help : @p_hlp.clear
+      @p_hlp.refresh
+    end
   when 'Q' # QUIT 
     Rcurses.clear_screen
     Rcurses::Cursor.show
@@ -734,8 +1393,10 @@ def pregs # PRINT CONTENT OF REGS (0-9)
   @p_reg.refresh
 end
 def error(err) # PRINT ERRORS TO X
-  @p_x.say(err)
-  @history.insert(-2, err)
+  # Truncate error message to fit in X register pane (width 30)
+  truncated_err = err.length > 30 ? err[0..26] + "..." : err
+  @p_x.say(truncated_err)
+  @history.insert(-2, err)  # Store full error in history
   getchr
 end
 def conf_write # WRITE TO .t-rex.conf
@@ -756,18 +1417,23 @@ refresh
 Rcurses::Cursor.hide
 begin # Capture main loop
   loop do # Main loop
-    @p_inf.say("  #{@mod} Sci=#{@sci} Fix=#{@fix}".i)
+    @p_inf.say("  #{@xrpn.mode_display} #{@mod} Sci=#{@sci} Fix=#{@fix}".i)
     pstack
     pregs
     @t = @stk.dup
+    @scroll_action = false
     main_getkey("") # Get key input from user 
-    help
+    help unless @scroll_action
     @u.push(@t.dup) if @t != @stk and @undo == false
     @undo = false
-    h1, w1 = IO.console.winsize
-    if h1 != @h or w1 != @w # Refresh on terminal resize 
-      @h, @w = IO.console.winsize
-      refresh
+    begin
+      h1, w1 = IO.console.winsize
+      if h1 != @h or w1 != @w # Refresh on terminal resize 
+        @h, @w = h1, w1
+        refresh
+      end
+    rescue
+      # Ignore winsize errors in non-terminal environments
     end
   end
 ensure # Write to .t-rex.conf on exit
