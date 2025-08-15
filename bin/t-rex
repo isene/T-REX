@@ -12,7 +12,7 @@
 #             for any damages resulting from its use. Further, I am under no
 #             obligation to maintain or extend this software. It is provided 
 #             on an 'as is' basis without any expressed or implied warranty.
-@version    = "3.0.0" # Major XRPN integration: hybrid mode, enhanced functions, program execution, scrolling
+@version    = "4.0.0" # Breaking change - requires rcurses 6.0.0+ with explicit initialization for Ruby 3.4+ compatibility
 
 require 'rcurses'
 include Rcurses::Input
@@ -1413,6 +1413,8 @@ def conf_write # WRITE TO .t-rex.conf
 end
 
 # MAIN PROGRAM
+# Initialize rcurses (required for rcurses 6.0.0+)
+Rcurses.init!
 refresh
 Rcurses::Cursor.hide
 begin # Capture main loop
