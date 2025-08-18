@@ -1,4 +1,11 @@
 # T-REX 3.0
+
+[![Gem Version](https://badge.fury.io/rb/t-rex.svg)](https://badge.fury.io/rb/t-rex)
+[![Ruby](https://img.shields.io/badge/Ruby-CC342D?style=flat&logo=ruby&logoColor=white)](https://www.ruby-lang.org/)
+[![License](https://img.shields.io/badge/License-Public%20Domain-brightgreen.svg)](https://unlicense.org/)
+[![GitHub stars](https://img.shields.io/github/stars/isene/T-REX.svg)](https://github.com/isene/T-REX/stargazers)
+[![Stay Amazing](https://img.shields.io/badge/Stay-Amazing-blue.svg)](https://isene.org)
+
 T-REX - Terminal Rpn calculator EXperiment
 
 Created using the [rcurses](https://github.com/isene/rcurses) library - the smoothest way to build curses applications in Ruby.
