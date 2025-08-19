@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect x="0" y="0" width="200" height="200" fill="#000814"/>
+  
+  <!-- Calculator display -->
+  <rect x="40" y="40" width="120" height="40" rx="5" fill="#1a2f1a" stroke="#333" stroke-width="2"/>
+  
+  <!-- RPN Stack display -->
+  <g font-family="monospace" font-size="10" fill="#00ff00">
+    <text x="45" y="55" opacity="0.6">T:  628.318530718</text>
+    <text x="45" y="68" opacity="0.8">Z:  3.141592654</text>
+    <text x="45" y="78" font-weight="bold">X:  42.0</text>
+  </g>
+  
+  <!-- T-REX dinosaur silhouette -->
+  <g transform="translate(100, 110)">
+    <path d="M -30,0 Q -35,-10 -30,-20 L -20,-25 L -10,-20 L 0,-22 L 10,-18 L 20,-20 L 25,-15 L 20,-5 L 25,0 L 20,5 L 10,3 L 0,5 L -10,3 L -20,5 Z" 
+          fill="#00ff00" opacity="0.8">
+      <animateTransform attributeName="transform" type="rotate" values="0;5;0;-5;0" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <!-- Eye -->
+    <circle cx="-15" cy="-15" r="2" fill="#fff">
+      <animate attributeName="r" values="2;1;2" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <!-- Function keys -->
+  <g fill="#444" stroke="#666" stroke-width="1">
+    <rect x="45" y="130" width="25" height="15" rx="2"/>
+    <rect x="75" y="130" width="25" height="15" rx="2"/>
+    <rect x="105" y="130" width="25" height="15" rx="2"/>
+    <rect x="135" y="130" width="25" height="15" rx="2"/>
+  </g>
+  
+  <!-- Key labels -->
+  <g font-family="monospace" font-size="8" fill="#00ff00" text-anchor="middle">
+    <text x="57" y="140">SIN</text>
+    <text x="87" y="140">COS</text>
+    <text x="117" y="140">LOG</text>
+    <text x="147" y="140">√x</text>
+  </g>
+  
+  <!-- Ruby gem -->
+  <g transform="translate(30, 30) scale(0.25)">
+    <path d="M -20 -10 L 20 -10 L 30 0 L 20 10 L -20 10 L -30 0 Z" fill="#CC342D" opacity="0.6"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="100" y="165" font-family="monospace" font-size="20" fill="#00ff00" text-anchor="middle" font-weight="bold">T-REX</text>
+  <text x="100" y="180" font-family="monospace" font-size="10" fill="#666" text-anchor="middle">RPN Calculator</text>
+</svg>
