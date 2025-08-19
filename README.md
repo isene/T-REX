@@ -7,6 +7,7 @@
 [![Stay Amazing](https://img.shields.io/badge/Stay-Amazing-blue.svg)](https://isene.org)
 
 <img src="img/trex_logo.svg" align="left" width="150" height="150"> T-REX - Terminal Rpn calculator EXperiment
+<br clear="left"/>
 
 Created using the [rcurses](https://github.com/isene/rcurses) library - the smoothest way to build curses applications in Ruby.
 
