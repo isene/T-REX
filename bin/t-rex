@@ -554,7 +554,7 @@ begin # PANE setup
   keys += "  r".k + "ad".t + " d".k + "eg".t + "  c".k + "lx".t
   keys += "\n\n"
   keys += " S".k + "to".t + " R".k + "cl".t + " s".k + "ci".t + " f".k + "ix".t
-  keys += " ^E".k + "ng".t + " u".k + "ndo".t + " H".k + "lp".t + " Q".k + "uit".t
+  keys += " u".k + "ndo".t + " H".k + "lp".t + " Q".k + "uit".t
   keys += "\n\n"
   keys += " X".k + "rpn".t + " (when in xrpn mode):".s
   keys += "\n"
