@@ -12,7 +12,7 @@
 #             for any damages resulting from its use. Further, I am under no
 #             obligation to maintain or extend this software. It is provided 
 #             on an 'as is' basis without any expressed or implied warranty.
-@version    = "4.0.0" # Breaking change - requires rcurses 6.0.0+ with explicit initialization for Ruby 3.4+ compatibility
+@version    = "4.1.0" # Add ENG (engineering notation) mode with Ctrl+E toggle
 
 require 'rcurses'
 include Rcurses::Input
@@ -81,8 +81,11 @@ help = <<HELPTEXT
   R-P: X value in x, Y in y - yields "θ" in y and "r" in x.
   P-R: "θ" in y and "r" in x - yields X in x and Y in y.
 
-  Use the "f" key to set the fixed number of decimal places. Use the "s" key to set 
+  Use the "f" key to set the fixed number of decimal places. Use the "s" key to set
   the limit for viewing numbers in the "scientific" notation (e.g. 5e+06 for 5000000).
+
+  Toggle "ENG" (engineering notation) mode with Ctrl+E. In ENG mode, exponents are
+  always multiples of 3 (e.g. 1230 becomes 1.2300e+003, 0.0045 becomes 4.5000e-003).
  
   Content of registers #0-#9 are shown below the functions.
   Store/recall using capital "S"/"R". "M" clears the regs.
@@ -482,9 +485,10 @@ end
 
 begin # BASIC setup
   @stk = Stack.new(0, 0, 0, 0, 0)
-  @reg = %w[0 0 0 0 0 0 0 0 0 0] 
+  @reg = %w[0 0 0 0 0 0 0 0 0 0]
   @fix = 4
   @sci = 6
+  @eng = false
   @dot = true
   @mod = "Deg"
   @hlp = true
@@ -550,7 +554,7 @@ begin # PANE setup
   keys += "  r".k + "ad".t + " d".k + "eg".t + "  c".k + "lx".t
   keys += "\n\n"
   keys += " S".k + "to".t + " R".k + "cl".t + " s".k + "ci".t + " f".k + "ix".t
-  keys += " u".k + "ndo".t + " H".k + "lp".t + " Q".k + "uit".t
+  keys += " ^E".k + "ng".t + " u".k + "ndo".t + " H".k + "lp".t + " Q".k + "uit".t
   keys += "\n\n"
   keys += " X".k + "rpn".t + " (when in xrpn mode):".s
   keys += "\n"
@@ -570,7 +574,38 @@ def histprint
   return print
 end
 def num_format(n) # THE NUMBER FORMAT FUNCTION
-  if n.abs >= 10 ** @sci.to_i
+  if @eng
+    # Engineering notation: exponents are multiples of 3
+    return "0" if n == 0
+    sign = n < 0 ? "-" : ""
+    n_abs = n.abs
+
+    # Calculate the exponent
+    exponent = Math.log10(n_abs).floor
+
+    # Adjust to nearest multiple of 3 (down)
+    eng_exp = (exponent / 3).floor * 3
+
+    # Calculate mantissa
+    mantissa = n_abs / (10 ** eng_exp)
+
+    # Format mantissa with appropriate decimal places
+    mantissa_str = "%.#{@fix}f" % mantissa
+
+    # Format with e notation
+    if eng_exp == 0
+      result = "#{sign}#{mantissa_str}"
+    else
+      result = "#{sign}#{mantissa_str}e%+03d" % eng_exp
+    end
+
+    # Apply locale formatting if needed
+    if not @dot
+      result.sub!(/\./, ',')
+    end
+
+    return result
+  elsif n.abs >= 10 ** @sci.to_i
     n = "%.#{@sci}g" % n
   elsif n.abs <= 10 ** (1 / @sci.to_i) and n > 10
     n = "%.#{@sci}g" % n
@@ -806,6 +841,10 @@ def main_getkey(c) # GET KEY FROM USER
       @fix = f.to_i
     end
     history("Fix #{f}")
+  when 'C-E'   # Toggle ENG mode
+    @eng = !@eng
+    mode = @eng ? "ON" : "OFF"
+    history("ENG #{mode}")
   when 'u'     # Undo
     unless @u.empty?
       @stk = @u.last.dup
@@ -1402,11 +1441,13 @@ end
 def conf_write # WRITE TO .t-rex.conf
   conf  = "@fix = #{@fix}\n"
   conf += "@sci = #{@sci}\n"
+  @eng ? e = "true" : e = "false"
+  conf += "@eng = #{e}\n"
   @dot ? d = "true" : d = "false"
   conf += "@dot = #{d}\n"
   conf += "@mod = \"#{@mod}\"\n"
   conf += "@stk = Stack.new(#{@stk.x}, #{@stk.y}, #{@stk.z}, #{@stk.t}, #{@stk.l})\n"
-  conf += "@reg = %w[#{@reg[0]} #{@reg[1]} #{@reg[2]} #{@reg[3]} #{@reg[4]} #{@reg[5]} #{@reg[6]} #{@reg[7]} #{@reg[8]} #{@reg[9]}]\n" 
+  conf += "@reg = %w[#{@reg[0]} #{@reg[1]} #{@reg[2]} #{@reg[3]} #{@reg[4]} #{@reg[5]} #{@reg[6]} #{@reg[7]} #{@reg[8]} #{@reg[9]}]\n"
   @hlp ? h = "true" : h = "false"
   conf += "@hlp = #{h}\n"
   File.write(Dir.home+'/.t-rex.conf', conf)
@@ -1419,7 +1460,8 @@ refresh
 Rcurses::Cursor.hide
 begin # Capture main loop
   loop do # Main loop
-    @p_inf.say("  #{@xrpn.mode_display} #{@mod} Sci=#{@sci} Fix=#{@fix}".i)
+    eng_status = @eng ? "ENG" : ""
+    @p_inf.say("  #{@xrpn.mode_display} #{@mod} #{eng_status} Sci=#{@sci} Fix=#{@fix}".i)
     pstack
     pregs
     @t = @stk.dup

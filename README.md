@@ -39,6 +39,8 @@ Use the "f" key to set the fixed number of decimal places.
 
 Use the "s" key to set the limit for viewing numbers in the "scientific" notation (e.g. 5e+06 for 5000000).
 
+Use "Ctrl+E" to toggle ENG (engineering notation) mode. In ENG mode, exponents are always multiples of 3 (e.g. 1230 becomes 1.2300e+003, 0.0045 becomes 4.5000e-003), making it easier to interpret values in engineering units (millis, micros, nanos, etc.).
+
 Content of registers #0-#9 are shown below the functions.
 
 Store/recall using capital "S"/"R". "M" clears the regs.
