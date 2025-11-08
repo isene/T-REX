@@ -5,6 +5,12 @@ All notable changes to T-REX will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.1] - 2025-10-21
+
+### Fixed
+- Fixed xrpn dependency version from ~> 3.0 to ~> 2.7 (latest available on RubyGems)
+- Resolves installation error reported by users on IRC
+
 ## [4.1.0] - 2025-10-21
 
 ### Added

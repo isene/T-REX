@@ -12,7 +12,7 @@
 #             for any damages resulting from its use. Further, I am under no
 #             obligation to maintain or extend this software. It is provided 
 #             on an 'as is' basis without any expressed or implied warranty.
-@version    = "4.1.0" # Add ENG (engineering notation) mode with Ctrl+E toggle
+@version    = "4.1.1" # Fix xrpn dependency version to ~> 2.7
 
 require 'rcurses'
 include Rcurses::Input
