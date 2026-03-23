@@ -12,7 +12,7 @@
 #             for any damages resulting from its use. Further, I am under no
 #             obligation to maintain or extend this software. It is provided 
 #             on an 'as is' basis without any expressed or implied warranty.
-@version    = "4.1.1" # Fix xrpn dependency version to ~> 2.7
+@version    = "4.1.2" # Fix stack handling during number entry
 
 require 'rcurses'
 include Rcurses::Input
@@ -1323,9 +1323,8 @@ def main_getkey(c) # GET KEY FROM USER
       @stk.x = number
     end
     history(number.to_s)
-    @stk.drop if c == "ENTER"
+    @stk.lift if c == "ENTER"
     if %w[< + - * / \ % ^ x C-X q C-Q n C-N g C-G i C-I o C-O a C-A c C-C].include?(c)
-      @stk.drop
       main_getkey(c)
     end
   end
