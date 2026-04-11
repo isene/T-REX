@@ -531,7 +531,7 @@ begin # PANE setup
   @p_y.align   = "r"
   @p_x.align   = "r"
 
-  @p_lbl.text  = "ltzyx".i
+  @p_lbl.text  = "ltzyx".it
 
   class String
     def t ; self.fg(111) ; end
@@ -564,7 +564,7 @@ end
 
 # FUNCTIONS
 def history(entry)
-  @history.push(entry.b, "  #{@stk.t}".i, "  #{@stk.z}".i, "  #{@stk.y}".i, "  #{@stk.x}".i.b, " ")
+  @history.push(entry.bd, "  #{@stk.t}".it, "  #{@stk.z}".it, "  #{@stk.y}".it, "  #{@stk.x}".it.bd, " ")
 end
 def histprint
   print = @history.join("\n ")
@@ -1420,13 +1420,13 @@ def pstack # PRINT STACK (XYZTL)
   @p_t.say(num_format(@stk.t))  
   @p_z.say(num_format(@stk.z))  
   @p_y.say(num_format(@stk.y))  
-  @p_x.say(num_format(@stk.x).b)  
+  @p_x.say(num_format(@stk.x).bd)  
 end
 def pregs # PRINT CONTENT OF REGS (0-9)
   @p_reg.text = "\n"
   10.times do |i| 
     r = num_format(@reg[i].to_f)
-    @p_reg.text += " R##{i}".i + "#{r}".rjust(27) + "\n" 
+    @p_reg.text += " R##{i}".it + "#{r}".rjust(27) + "\n" 
   end
   @p_reg.refresh
 end
@@ -1460,7 +1460,7 @@ Rcurses::Cursor.hide
 begin # Capture main loop
   loop do # Main loop
     eng_status = @eng ? "ENG" : ""
-    @p_inf.say("  #{@xrpn.mode_display} #{@mod} #{eng_status} Sci=#{@sci} Fix=#{@fix}".i)
+    @p_inf.say("  #{@xrpn.mode_display} #{@mod} #{eng_status} Sci=#{@sci} Fix=#{@fix}".it)
     pstack
     pregs
     @t = @stk.dup
